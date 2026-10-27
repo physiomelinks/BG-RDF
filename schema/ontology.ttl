@@ -78,7 +78,8 @@ bgf:SignalBond
     dcterms:description """A connection in which no power flows, used to convey state information: from a variable of its
 source (bgf:hasSource: a bond element, a junction or a bgf:SignalBlock; bgf:signalVariable names which) to its target
 (bgf:hasTarget: a bond element or a bgf:SignalBlock), either into one of the target's signal inputs
-(bgf:signalInput, by default the first not otherwise connected) or scaling one of its parameters (bgf:modulates)."""
+(bgf:signalInput, by default the first, by name, not otherwise connected) or scaling one of its parameters
+(bgf:modulates)."""
 .
 
 bgf:SignalDomain
