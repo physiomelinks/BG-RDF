@@ -196,7 +196,7 @@ def test_signal_vocabulary_is_described(graph):
     '''Signal blocks, signal bonds' properties and template signal inputs and outputs are in the ontology.'''
     for name in ('SignalBlock', 'SignalBond', 'SignalDomain', 'hasSignalBlock', 'hasSignalBond', 'hasSignalInput',
                  'hasSignalOutput', 'unitsOf', 'signalVariable', 'signalInput', 'modulates', 'modulationExponent',
-                 'portType'):
+                 'portType', 'portVariables', 'portDirection', 'portOrder', 'multiPort'):
         assert (BGF[name], RDF.type, None) in graph, name
 
 
@@ -206,7 +206,8 @@ def test_signal_blocks_have_one_output_and_resolvable_units(graph):
     blocks = _signal_blocks(graph)
     assert {str(b).rsplit('#', 1)[1] for b in blocks} >= {
         'FirstOrderLag', 'SigmoidMap', 'SaturatingScale', 'LogisticScale', 'PowerLaw', 'LinearMap', 'Product', 'Sum',
-        'OsmoticPressure', 'Concentration', 'SignalInputPort', 'SignalOutputPort'}
+        'OsmoticPressure', 'Concentration', 'SignalInputPort', 'SignalOutputPort', 'VantHoff', 'Constant', 'Gain',
+        'Difference', 'Ratio', 'Rectifier', 'Integrator'}
     for b in blocks:
         assert graph.value(b, BGF.hasDomain) == BGF.Signal, b
         assert len(list(graph.objects(b, BGF.hasSignalOutput))) == 1, b
@@ -216,10 +217,13 @@ def test_signal_blocks_have_one_output_and_resolvable_units(graph):
             for v in graph.objects(b, predicate):
                 units_of = graph.value(v, BGF.unitsOf)
                 if units_of is not None:
-                    assert str(units_of) in own, (b, units_of)
+                    # another variable's units, or a product or quotient of two variables'
+                    assert set(str(units_of).replace('*', ' ').replace('/', ' ').split()) <= own, (b, units_of)
                     assert graph.value(v, BGF.hasUnits) is None, (b, 'both units and unitsOf')
                 elif graph.value(v, BGF.hasUnits) is None:
-                    assert predicate != BGF.hasSignalOutput or b == BGF.SignalInputPort, (b, 'output without units')
+                    # an output with no units of its own takes the block's value's
+                    assert predicate != BGF.hasSignalOutput or b in (BGF.SignalInputPort, BGF.Constant, BGF.Integrator), \
+                        (b, 'output without units')
 
 
 def test_elements_with_signal_inputs_fix_their_units(graph):
@@ -275,3 +279,36 @@ def test_signal_blocks_compute_the_control_laws(graph):
     assert _solve(graph, 'LinearMap', 'y', dict(a=0.2, b=0.8, u=1.5)) == pytest.approx(1.4)
     assert _solve(graph, 'OsmoticPressure', 'y', dict(phi=2.0, RT=2578.73058, q_s=0.14, q_w=1.0)) == \
         pytest.approx(2 * 2578.73058 * 0.14)
+
+
+def test_signal_arithmetic_blocks(graph):
+    '''Gain, difference, ratio and rectifier, for laws such as a filtration fraction or a one-way osmotic flow.'''
+    assert _solve(graph, 'Gain', 'y', dict(k=1e-3, u=2.0)) == pytest.approx(2e-3)
+    assert _solve(graph, 'Difference', 'y', dict(u_1=5.0, u_2=3.5)) == pytest.approx(1.5)
+    assert _solve(graph, 'Ratio', 'y', dict(u_1=1.2, u_2=4.0)) == pytest.approx(0.3)
+    assert _solve(graph, 'Rectifier', 'y', dict(u=-0.4)) == 0.0
+    assert _solve(graph, 'Rectifier', 'y', dict(u=0.4)) == pytest.approx(0.4)
+    assert _solve(graph, 'VantHoff', 'y', dict(phi=2.0, RT=2578.73058, c=0.14)) == pytest.approx(2 * 2578.73058 * 0.14)
+
+
+def test_the_integrator_and_the_constant_have_their_values_units(graph):
+    '''The integrator's total and a constant take their units from the block's value.'''
+    for block in (BGF.Integrator, BGF.Constant):
+        output = graph.value(block, BGF.hasSignalOutput)
+        assert graph.value(output, BGF.hasUnits) is None and graph.value(output, BGF.unitsOf) is None
+    assert 'diff' in _relation(graph, BGF.Integrator)
+
+
+def test_the_sodium_pump_is_driven_by_atp_against_the_membrane_potential(graph):
+    '''The Na/K-ATPase's Na flux: no flux at equilibrium, K_ATP scales the forward cycle, and a more negative
+    membrane potential speeds it.'''
+    RT, F = 2578.73058, 0.96485e5
+    env = dict(k_NKE=1e-4, K_ATP=1.0, K_Na=1.0, K_K=1.0, u_e=0.0, c_Na_i=0.015, c_Na_o=0.14, c_K_i=0.14,
+               c_K_o=0.0045, RT=RT, F=F)
+    v = _solve(graph, 'NKEPump', 'v', env)
+    a, b = (0.015 ** 3) * 0.0045 ** 2, (0.14 ** 3) * 0.14 ** 2
+    den = (1 + 0.015 ** 3) * (1 + 0.14 ** 3) * (1 + 0.0045 ** 2) * (1 + 0.14 ** 2)
+    assert v == pytest.approx(3e-4 * (a - b) / den)
+    assert _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=b / a)) == pytest.approx(0.0, abs=1e-18)
+    assert _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=3.1e8, u_e=-0.04)) > \
+        _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=3.1e8))

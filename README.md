@@ -41,6 +41,7 @@ element's symbol) and says how it is drawn with `bgf:hasStyle`, a `bgf:ElementSt
 | `bgf:KedemKatchalskySoluteFlux` | Reaction | `v = omega (c_in - c_out) + (1 - sigma)(c_in + c_out)/2 Jv`, `c`, `Jv` signals | KK |
 | `bgf:ConvectiveSoluteFlux` | Reaction | `v = c Jv`, signals | cv |
 | `bgf:MichaelisMentenReaction` | Reaction | `v = kcat a E x/(x + Km)`, `x = exp(u_f/RT)`, enzyme `E` a signal | MM |
+| `bgf:NKEPump` | Reaction | Na/K-ATPase's Na flux `3 k_NKE (K_ATP n_i^3 k_o^2 - n_o^3 k_i^2 exp(2 F u_e/RT))/((1 + n_i^3)(1 + n_o^3)(1 + k_o^2)(1 + k_i^2))`, `n = K_Na c_Na`, `k = K_K c_K`, concentrations signals | NKE |
 
 A `bgf:TransformNode` whose ports are in different physical domains is taken to be a gyrator. Say
 which it is with `bgf:TransformerNode` or `bgf:GyratorNode`. A reaction that moves charge q across a
@@ -65,10 +66,30 @@ Signal blocks (`templates/signal.ttl`) each compute one output `y`, so control l
 `FirstOrderLag` (`dy/dt = (u - y)/tau`), `SigmoidMap` (`y = (y_min + y_max e^x)/(1 + e^x)`, `x = (u - u_nom)/k`),
 `SaturatingScale` (`y = 1 + alpha u/(u + u_half)`), `LogisticScale` (`y = 1 + a/(1 + exp((u - u_th)/w))`),
 `PowerLaw` (`y = (u/u_ref)^n`), `LinearMap` (`y = a + b u`), `Product`, `Sum`, `OsmoticPressure`
-(`y = phi RT q_s/q_w`), `Concentration` (`y = q_s/q_w`), and `SignalInputPort` and `SignalOutputPort`, a
-model's signals from and to outside it (a module's entrance and exit ports, of type `bgf:portType`). A block's
-variable has fixed units, those of another of its variables (`bgf:unitsOf`), or its source's (an input) or its
-value's (a parameter).
+(`y = phi RT q_s/q_w`), `Concentration` (`y = q_s/q_w`), `VantHoff` (`y = phi RT c`), `Constant` (`y` is the
+block's value, a parameter several elements can share through signals that set their parameters), `Gain`
+(`y = k u`, `k` of any units), `Difference` (`y = u_1 - u_2`), `Ratio` (`y = u_1/u_2`), `Rectifier`
+(`y = max(u, 0)`), `Integrator` (`dy/dt = u`, from the block's value), and `SignalInputPort` and `SignalOutputPort`,
+a model's signals from and to outside it (a module's entrance and exit ports, of type `bgf:portType`). A block's
+variable has fixed units, those of another of its variables or of a product or quotient of two (`bgf:unitsOf`
+`"u"`, `"k*u"`, `"u_1/u_2"`), or its source's (an input) or its value's (a parameter, a constant's output).
+
+### Module ports:
+
+Any element or block with a `bgf:portType` is part of a module port of that type. `bgf:portVariables` names the
+variables it gives the port, in order (`"v"`, `"q"`, `"u v"`, ...; by default a source's flow and potential, a block's
+output, a store's quantity, another element's flow), `bgf:portDirection` makes it an `"entrance"`, `"exit"` or
+`"general"` port (by default a source is an entrance when its bond leaves it, an input port block an entrance and
+anything else an exit), and `bgf:multiPort` gives the port's `multi_port` (`"True"`, `"sum"`). Elements with the same
+port type and direction that have a `bgf:portOrder` make one port of several variables, in that order:
+
+```turtle
+:u_gl a bgf:HydraulicPotential ; bgf:hasSymbol "u_gl" ; bgf:portType "renal_bed_port" ;
+    bgf:portVariables "u" ; bgf:portDirection "entrance" ; bgf:portOrder 1 .
+:v_aff a bgf:SignalInputPort ; bgf:hasSymbol "v_aff" ; bgf:portType "renal_bed_port" ; bgf:portOrder 5 .
+:q_pl_Na a bgf:ChemicalStorageNode ; bgf:portType "circulation_Na_port" ; bgf:portVariables "q" ;
+    bgf:multiPort "True" .
+```
 
 ```turtle
 :Ang_scale a bgf:SaturatingScale ; bgf:hasSymbol "ang_scale" ;

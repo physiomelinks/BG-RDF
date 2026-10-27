@@ -455,8 +455,9 @@ bgf:hasSignalOutput
 bgf:unitsOf
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     dcterms:description """A template variable has the units of another of the template's variables (by its varName),
-e.g. a lag's output those of its input, known once the model's signals are connected. A parameter with neither
-bgf:hasUnits nor bgf:unitsOf takes its value's units.""" ;
+e.g. a lag's output those of its input, known once the model's signals are connected; or of a product or quotient of
+two of them (\"k*u\", \"u_1/u_2\"), known once both are. A parameter with neither bgf:hasUnits nor bgf:unitsOf takes
+its value's units.""" ;
     rdfs:domain bgf:Variable ;
     rdfs:range xsd:string .
 
@@ -493,10 +494,39 @@ bgf:modulationExponent
 
 bgf:portType
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dcterms:description """The port type a signal input or output port (bgf:SignalInputPort, bgf:SignalOutputPort), or a
-flow or potential source, has when the model is a module of a module library: modules are connected where an exit
-port and an entrance port have the same type. A port block's default is <the element's name>_port; a source with a
-port type is a port of its flow and potential (e.g. a vessel_port), an entrance when its bond leaves it.""" ;
+    dcterms:description """The port type an element or signal block is part of when the model is a module of a module
+library: modules are connected where an exit port and an entrance port have the same type. A signal input or output
+port block (bgf:SignalInputPort, bgf:SignalOutputPort) is a port of its output (default type <the element's
+name>_port); a flow or potential source of its flow and potential (e.g. a vessel_port), an entrance when its bond
+leaves it; any other element or block of the variables bgf:portVariables names (by default a store's quantity, another
+bond element's flow, a block's output), an exit port.""" ;
+    rdfs:range xsd:string .
+
+bgf:portVariables
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """The variables an element with a bgf:portType gives its port, in order, by their names in its
+template, separated by spaces: a domain variable (\"q\", \"u\", \"v\") or a parameter (e.g. \"v\" for only a flow
+source's flow, \"q\" for a store's amount). A port variable with a value (a source's value, a parameter) is a boundary
+condition the connected module sets, a state stays a state, and any other a variable the module computes.""" ;
+    rdfs:range xsd:string .
+
+bgf:portDirection
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """Whether an element's port (bgf:portType) is an \"entrance\", \"exit\" or \"general\" port of
+the module, in place of its default.""" ;
+    rdfs:range xsd:string .
+
+bgf:portOrder
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """The place of an element's variables in a port of several variables: the elements with the same
+bgf:portType, direction and a bgf:portOrder make one port, their variables in increasing order of it (e.g. a renal
+bed's pressures, volumes and flows, each from its own element).""" ;
+    rdfs:range xsd:integer .
+
+bgf:multiPort
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """A port's multi_port in the module's configuration: \"True\" when it connects to several modules,
+\"sum\" when an entrance port adds up what several exit ports give it.""" ;
     rdfs:range xsd:string .
 
 #################################################################
