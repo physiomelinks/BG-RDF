@@ -502,6 +502,12 @@ leaves it; any other element or block of the variables bgf:portVariables names (
 bond element's flow, a block's output), an exit port.""" ;
     rdfs:range xsd:string .
 
+bgf:oneWay
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """A resistance or reaction that passes flow only forwards (true): its flow is max(v, 0) of its
+constitutive relation's v, as through a valve.""" ;
+    rdfs:range xsd:boolean .
+
 bgf:unitSystem
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     dcterms:description """A model's unit system, in place of the templates' units: \"SI\" has cubic metres for their

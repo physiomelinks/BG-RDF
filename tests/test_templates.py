@@ -196,7 +196,7 @@ def test_signal_vocabulary_is_described(graph):
     '''Signal blocks, signal bonds' properties and template signal inputs and outputs are in the ontology.'''
     for name in ('SignalBlock', 'SignalBond', 'SignalDomain', 'hasSignalBlock', 'hasSignalBond', 'hasSignalInput',
                  'hasSignalOutput', 'unitsOf', 'signalVariable', 'signalInput', 'modulates', 'modulationExponent',
-                 'portType', 'portVariables', 'portDirection', 'portOrder', 'multiPort', 'unitSystem'):
+                 'portType', 'portVariables', 'portDirection', 'portOrder', 'multiPort', 'unitSystem', 'oneWay'):
         assert (BGF[name], RDF.type, None) in graph, name
 
 
@@ -312,3 +312,9 @@ def test_the_sodium_pump_is_driven_by_atp_against_the_membrane_potential(graph):
     assert _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=b / a)) == pytest.approx(0.0, abs=1e-18)
     assert _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=3.1e8, u_e=-0.04)) > \
         _solve(graph, 'NKEPump', 'v', dict(env, K_ATP=3.1e8))
+
+
+def test_a_flux_set_by_a_signal_is_its_signal(graph):
+    '''A flow between two nodes that a signal sets: a law built of blocks where no template has it.'''
+    assert _solve(graph, 'SignalFlux', 'v', dict(J=2.5e-6)) == pytest.approx(2.5e-6)
+    assert _solve(graph, 'SignalWaterFlux', 'v', dict(J=-1e-4)) == pytest.approx(-1e-4)

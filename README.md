@@ -41,6 +41,7 @@ element's symbol) and says how it is drawn with `bgf:hasStyle`, a `bgf:ElementSt
 | `bgf:KedemKatchalskySoluteFlux` | Reaction | `v = omega (c_in - c_out) + (1 - sigma)(c_in + c_out)/2 Jv`, `c`, `Jv` signals | KK |
 | `bgf:ConvectiveSoluteFlux` | Reaction | `v = c Jv`, signals | cv |
 | `bgf:MichaelisMentenReaction` | Reaction | `v = kcat a E x/(x + Km)`, `x = exp(u_f/RT)`, enzyme `E` a signal | MM |
+| `bgf:SignalFlux`, `bgf:SignalWaterFlux` | Reaction | `v = J`, a signal (a flow between two nodes that a law of signal blocks sets) | set |
 | `bgf:NKEPump` | Reaction | Na/K-ATPase's Na flux `3 k_NKE (K_ATP n_i^3 k_o^2 - n_o^3 k_i^2 exp(2 F u_e/RT))/((1 + n_i^3)(1 + n_o^3)(1 + k_o^2)(1 + k_i^2))`, `n = K_Na c_Na`, `k = K_K c_K`, concentrations signals | NKE |
 
 A `bgf:TransformNode` whose ports are in different physical domains is taken to be a gyrator. Say
@@ -73,6 +74,8 @@ block's value, a parameter several elements can share through signals that set t
 a model's signals from and to outside it (a module's entrance and exit ports, of type `bgf:portType`). A block's
 variable has fixed units, those of another of its variables or of a product or quotient of two (`bgf:unitsOf`
 `"u"`, `"k*u"`, `"u_1/u_2"`), or its source's (an input) or its value's (a parameter, a constant's output).
+
+A resistance or reaction with `bgf:oneWay true` passes flow only forwards: its flow is `max(v, 0)`.
 
 A model in other units than the templates' says so with `bgf:unitSystem`: `"SI"` has cubic metres for litres and
 Pa for kPa (`<model> bgf:unitSystem "SI"`). A value given in other units of the same kind (`"6.0e-9 m6/J"`,

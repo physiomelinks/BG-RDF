@@ -710,6 +710,41 @@ bgf:KedemKatchalskyWaterFlux
 #===============================================================================
 #===============================================================================
 
+bgf:SignalWaterFlux
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Water flow set by a signal" ;
+    bgf:hasSymbol "J" ;
+    bgf:lawLabel "set" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#2F5597" ;
+        bgf:backgroundColour "#F2F2F2" ;
+        bgf:borderColour "#7F7F7F" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'water_in' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'water_out' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "J" ;
+        rdfs:label "The flux (L/s), e.g. from a law built of signal blocks" ;
+        bgf:hasUnits "L/s"^^cdt:ucumunit
+    ] ;
+    # v = J: a flow from one side to the other that a signal sets (a modulated flow source between two nodes)
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply><eq/><ci>v</ci><ci>J</ci></apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
 bgf:HydraulicComplianceNode
     a bgf:CompositeTemplate ;
     rdfs:label "Hydraulic compliance with Zero Node" ;
@@ -748,3 +783,9 @@ bgf:KedemKatchalskyWaterFluxNode
 
 #===============================================================================
 #===============================================================================
+
+bgf:SignalWaterFluxNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Water flow set by a signal with One Node" ;
+    rdfs:subClassOf bgf:SignalWaterFlux ;
+    rdfs:subClassOf bgf:OneReactionNode .
