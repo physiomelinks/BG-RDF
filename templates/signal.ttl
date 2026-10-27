@@ -1,0 +1,575 @@
+@prefix bgf: <https://bg-rdf.org/ontologies/bondgraph-framework#> .
+@prefix cdt: <https://w3id.org/cdt/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#===============================================================================
+
+# Signal blocks: no power, only information carried by signal bonds (bgf:SignalBond). Each block computes one
+# output `y` from its inputs; blocks chain, so control laws are built from a few forms:
+#
+#   renin secretion   v = k f_P(P) (s/s0)^-B      a flow source's v modulated by
+#                                                 Product(LogisticScale(P), PowerLaw(s))
+#   aldosterone       v = a + b f_Na s/s0, lagged  a flow source's v modulated by
+#                                                 FirstOrderLag(LinearMap(Product(PowerLaw(Na), PowerLaw(s))))
+#   Ang II scaling    R (1 + alpha s/(s + s_h))    a resistance's R modulated by SaturatingScale(s)
+#   baroreceptor      f = (f_min + f_max e^x)/(1 + e^x), x = (P_f - P_nom)/k, P_f lagged from P
+#                                                 SigmoidMap(FirstOrderLag(P))
+#
+# A variable's units are fixed (bgf:hasUnits), those of another of the block's variables (bgf:unitsOf), or, for an
+# input with neither, its signal source's; a parameter with neither takes its value's units.
+
+bgf:Signal
+    a bgf:SignalDomain ;
+    rdfs:label "Signals" ;
+    bgf:hasConstant [
+        bgf:varName "RT" ;
+        bgf:hasValue "2578.73058 J/mol"^^cdt:ucum
+    ] .
+
+#===============================================================================
+
+bgf:FirstOrderLag
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "First-order lag" ;
+    bgf:hasSymbol "\\tau" ;
+    bgf:lawLabel "lag" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFFFFF" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Lagged input (its initial value is the block's value)" ;
+        bgf:unitsOf "u"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "tau" ;
+        rdfs:label "Time constant (s)" ;
+        bgf:hasUnits "s"^^cdt:ucumunit
+    ] ;
+    # ode(y, t) = (u - y)/tau
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply><diff/><bvar><ci>t</ci></bvar><ci>y</ci></apply>
+                <apply>
+                    <divide/>
+                    <apply><minus/><ci>u</ci><ci>y</ci></apply>
+                    <ci>tau</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:SigmoidMap
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Sigmoid between a minimum and a maximum" ;
+    bgf:hasSymbol "S" ;
+    bgf:lawLabel "sig" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFFFFF" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Output, from y_min (u far below u_nom) to y_max (far above)" ;
+        bgf:unitsOf "y_min"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "y_min" ;
+        rdfs:label "Output far below u_nom (its units are the output's)"
+    ], [
+        bgf:varName "y_max" ;
+        rdfs:label "Output far above u_nom" ;
+        bgf:unitsOf "y_min"
+    ], [
+        bgf:varName "u_nom" ;
+        rdfs:label "Input at the midpoint" ;
+        bgf:unitsOf "u"
+    ], [
+        bgf:varName "k" ;
+        rdfs:label "Input range of the sigmoid's slope" ;
+        bgf:unitsOf "u"
+    ] ;
+    # y = (y_min + y_max*exp((u - u_nom)/k))/(1 + exp((u - u_nom)/k))
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <plus/>
+                        <ci>y_min</ci>
+                        <apply>
+                            <times/>
+                            <ci>y_max</ci>
+                            <apply><exp/><apply><divide/><apply><minus/><ci>u</ci><ci>u_nom</ci></apply><ci>k</ci></apply></apply>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <plus/>
+                        <cn>1</cn>
+                        <apply><exp/><apply><divide/><apply><minus/><ci>u</ci><ci>u_nom</ci></apply><ci>k</ci></apply></apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:SaturatingScale
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Saturating scale factor" ;
+    bgf:hasSymbol "s" ;
+    bgf:lawLabel "sat" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFFFFF" ;
+        bgf:borderColour "#7030A0" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Scale factor, 1 at no input, 1 + alpha at saturation" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "alpha" ;
+        rdfs:label "Largest change of the scale" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_half" ;
+        rdfs:label "Input at half the largest change" ;
+        bgf:unitsOf "u"
+    ] ;
+    # y = 1 + alpha*u/(u + u_half)
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply>
+                    <plus/>
+                    <cn>1</cn>
+                    <apply>
+                        <divide/>
+                        <apply><times/><ci>alpha</ci><ci>u</ci></apply>
+                        <apply><plus/><ci>u</ci><ci>u_half</ci></apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:LogisticScale
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Scale factor rising below a threshold" ;
+    bgf:hasSymbol "s" ;
+    bgf:lawLabel "thr" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFFFFF" ;
+        bgf:borderColour "#7030A0" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Scale factor: 1 well above u_th, 1 + a well below" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "a" ;
+        rdfs:label "Rise below the threshold" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_th" ;
+        rdfs:label "Threshold" ;
+        bgf:unitsOf "u"
+    ], [
+        bgf:varName "w" ;
+        rdfs:label "Width of the threshold" ;
+        bgf:unitsOf "u"
+    ] ;
+    # y = 1 + a/(1 + exp((u - u_th)/w))
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply>
+                    <plus/>
+                    <cn>1</cn>
+                    <apply>
+                        <divide/>
+                        <ci>a</ci>
+                        <apply>
+                            <plus/>
+                            <cn>1</cn>
+                            <apply><exp/><apply><divide/><apply><minus/><ci>u</ci><ci>u_th</ci></apply><ci>w</ci></apply></apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:PowerLaw
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Power law of a ratio" ;
+    bgf:hasSymbol "p" ;
+    bgf:lawLabel "pow" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFFFFF" ;
+        bgf:borderColour "#7030A0" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "(u/u_ref)^n" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "u_ref" ;
+        rdfs:label "Reference input" ;
+        bgf:unitsOf "u"
+    ], [
+        bgf:varName "n" ;
+        rdfs:label "Exponent (1 for the plain ratio)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # y = (u/u_ref)^n
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply>
+                    <power/>
+                    <apply><divide/><ci>u</ci><ci>u_ref</ci></apply>
+                    <ci>n</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:LinearMap
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Linear map of a dimensionless signal" ;
+    bgf:hasSymbol "L" ;
+    bgf:lawLabel "lin" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#F2F2F2" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "Input (dimensionless)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "a + b u" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "a" ;
+        rdfs:label "Offset" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ], [
+        bgf:varName "b" ;
+        rdfs:label "Slope" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # y = a + b*u
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply><plus/><ci>a</ci><apply><times/><ci>b</ci><ci>u</ci></apply></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:Product
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Product of two dimensionless signals" ;
+    bgf:hasSymbol "\\times" ;
+    bgf:lawLabel "mul" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#F2F2F2" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u_1" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_2" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # y = u_1*u_2
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply><times/><ci>u_1</ci><ci>u_2</ci></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:Sum
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Sum of two signals" ;
+    bgf:hasSymbol "+" ;
+    bgf:lawLabel "add" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#F2F2F2" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u_1"
+    ], [
+        bgf:varName "u_2" ;
+        bgf:unitsOf "u_1"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        bgf:unitsOf "u_1"
+    ] ;
+    # y = u_1 + u_2
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply><plus/><ci>u_1</ci><ci>u_2</ci></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:OsmoticPressure
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Osmotic pressure of a solute" ;
+    bgf:hasSymbol "\\Pi" ;
+    bgf:lawLabel "osm" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#2F5597" ;
+        bgf:backgroundColour "#DDEBF7" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "q_s" ;
+        rdfs:label "Solute amount (mol)" ;
+        bgf:hasUnits "mol"^^cdt:ucumunit
+    ], [
+        bgf:varName "q_w" ;
+        rdfs:label "Water volume (L)" ;
+        bgf:hasUnits "L"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Osmotic pressure (kPa); add several solutes' with Sum blocks" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "phi" ;
+        rdfs:label "Osmoles per mole (2 for NaCl)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # y = phi*RT*q_s/q_w
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply>
+                    <divide/>
+                    <apply><times/><ci>phi</ci><ci>RT</ci><ci>q_s</ci></apply>
+                    <ci>q_w</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:Concentration
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Concentration of a solute" ;
+    bgf:hasSymbol "c" ;
+    bgf:lawLabel "conc" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#2F5597" ;
+        bgf:backgroundColour "#DDEBF7" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "q_s" ;
+        rdfs:label "Solute amount (mol)" ;
+        bgf:hasUnits "mol"^^cdt:ucumunit
+    ], [
+        bgf:varName "q_w" ;
+        rdfs:label "Water volume (L)" ;
+        bgf:hasUnits "L"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "Concentration (mol/L)" ;
+        bgf:hasUnits "mol/L"^^cdt:ucumunit
+    ] ;
+    # y = q_s/q_w
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>y</ci>
+                <apply><divide/><ci>q_s</ci><ci>q_w</ci></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:SignalInputPort
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Signal input port" ;
+    bgf:hasSymbol "\\triangleright" ;
+    bgf:lawLabel "in" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFF2CC" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "A signal from outside the model: the block's value (with its units), which a module's entrance port sets"
+    ] ;
+    # y is a constant, the block's value, or a module's entrance port variable
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML"/>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:SignalOutputPort
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:SignalBlock ;
+    bgf:hasDomain bgf:Signal ;
+    rdfs:label "Signal output port" ;
+    bgf:hasSymbol "\\triangleleft" ;
+    bgf:lawLabel "out" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#1F4E79" ;
+        bgf:backgroundColour "#FFF2CC" ;
+        bgf:borderColour "#1F4E79" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "u" ;
+        rdfs:label "The signal the model gives outside"
+    ] ;
+    bgf:hasSignalOutput [
+        bgf:varName "y" ;
+        rdfs:label "The signal, named as the block: a module's exit port variable" ;
+        bgf:unitsOf "u"
+    ] ;
+    # y = u
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply><eq/><ci>y</ci><ci>u</ci></apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+#===============================================================================

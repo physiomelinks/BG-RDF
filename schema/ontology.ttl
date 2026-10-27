@@ -75,7 +75,22 @@ bgf:PowerPort
 
 bgf:SignalBond
     a owl:Class ;
-    dcterms:description "A connection in which no power flows, used to convey state information." .
+    dcterms:description """A connection in which no power flows, used to convey state information: from a variable of its
+source (bgf:hasSource: a bond element, a junction or a bgf:SignalBlock; bgf:signalVariable names which) to its target
+(bgf:hasTarget: a bond element or a bgf:SignalBlock), either into one of the target's signal inputs
+(bgf:signalInput, by default the first not otherwise connected) or scaling one of its parameters (bgf:modulates)."""
+.
+
+bgf:SignalDomain
+    a owl:Class ;
+    dcterms:description "The domain of signal blocks: no power, only information (it may give constants, e.g. RT)." .
+
+bgf:SignalBlock
+    a owl:Class ;
+    rdfs:label "Signal block" ;
+    dcterms:description """A block that computes one signal output (bgf:hasSignalOutput) from its signal inputs
+(bgf:hasSignalInput) and parameters by its constitutive relation, e.g. a first-order lag or a sigmoid. It has no power
+ports: it is connected by bgf:SignalBond only.""" .
 
 #################################################################
 
@@ -413,6 +428,73 @@ bgf:hasSignalBond
     rdfs:domain bgf:BondgraphModel ;
     rdfs:range bgf:SignalBond .
 
+bgf:hasSignalBlock
+    a owl:ObjectProperty ;
+    rdfs:domain bgf:BondgraphModel ;
+    rdfs:range bgf:SignalBlock .
+
+#################################################################
+#    Signals
+#################################################################
+
+bgf:hasSignalInput
+    a owl:ObjectProperty ;
+    dcterms:description """A signal input of an Element Template: a variable of its constitutive relation whose value
+arrives on a bgf:SignalBond. It has fixed units (bgf:hasUnits), the units of another of the template's variables
+(bgf:unitsOf), or neither, when it takes its source's units.""" ;
+    rdfs:domain bgf:ElementTemplate ;
+    rdfs:range bgf:Variable .
+
+bgf:hasSignalOutput
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    dcterms:description "The output of a signal block's template: the variable its constitutive relation defines." ;
+    rdfs:domain bgf:ElementTemplate ;
+    rdfs:range bgf:Variable .
+
+bgf:unitsOf
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """A template variable has the units of another of the template's variables (by its varName),
+e.g. a lag's output those of its input, known once the model's signals are connected. A parameter with neither
+bgf:hasUnits nor bgf:unitsOf takes its value's units.""" ;
+    rdfs:domain bgf:Variable ;
+    rdfs:range xsd:string .
+
+bgf:signalVariable
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """The variable of a signal bond's source that it carries: a domain variable of a bond element
+(\"q\", \"u\" or \"v\") or a signal block's output. By default a store's quantity, a flow store's, resistance's
+or reaction's flow, a source's value, a 0-junction's potential, a 1-junction's flow and a signal block's output.""" ;
+    rdfs:domain bgf:SignalBond ;
+    rdfs:range xsd:string .
+
+bgf:signalInput
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "The signal input of its target (by varName) that a signal bond sets." ;
+    rdfs:domain bgf:SignalBond ;
+    rdfs:range xsd:string .
+
+bgf:modulates
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """The parameter of its target (by varName; for a flow or potential source, its value \"v\"
+or \"u\") that a signal bond scales: in the target's constitutive relation the parameter p becomes p s^n, with s the
+(dimensionless) signal and n the bond's bgf:modulationExponent (1 when not given; -1 divides by the signal). Several
+bonds modulating one parameter multiply.""" ;
+    rdfs:domain bgf:SignalBond ;
+    rdfs:range xsd:string .
+
+bgf:modulationExponent
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "The power of the signal a modulating signal bond scales its parameter by (1 by default)." ;
+    rdfs:domain bgf:SignalBond ;
+    rdfs:range xsd:integer .
+
+bgf:portType
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """The port type a signal input or output port (bgf:SignalInputPort, bgf:SignalOutputPort)
+has when the model is a module of a module library: modules are connected where an exit port and an entrance port
+have the same type. By default <the element's name>_port.""" ;
+    rdfs:range xsd:string .
+
 #################################################################
 
 bgf:direction
@@ -458,13 +540,11 @@ bgf:variableValue
 
 bgf:hasSource
     a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain bgf:PowerBond ;
-    rdfs:range bgf:PowerPort .
+    dcterms:description "The source of a power bond (a power port) or of a signal bond." .
 
 bgf:hasTarget
     a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain bgf:PowerBond ;
-    rdfs:range bgf:PowerPort .
+    dcterms:description "The target of a power bond (a power port) or of a signal bond." .
 
 #################################################################
 

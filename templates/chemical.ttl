@@ -541,3 +541,209 @@ bgf:NKETransporterNode
 
 #===============================================================================
 #===============================================================================
+
+# Reactions driven by signals as well as by their substrates' potentials: an irreversible Michaelis-Menten reaction
+# whose enzyme amount is a signal, and solute fluxes set by concentrations and a water flux (Kedem-Katchalsky
+# transport with bgf:KedemKatchalskyWaterFlux, and convection). Any parameter can be scaled by a signal (a
+# bgf:SignalBond with bgf:modulates), e.g. an Na/K-ATPase's k_NKE by aldosterone.
+
+#===============================================================================
+
+bgf:MichaelisMentenReaction
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Irreversible Michaelis-Menten reaction" ;
+    bgf:lawLabel "MM" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#FFE9A8" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'f' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'r' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "kcat" ;
+        rdfs:label "Turnover number (per s)" ;
+        bgf:hasUnits "s-1"^^cdt:ucumunit
+    ], [
+        bgf:varName "Km" ;
+        rdfs:label "Half-saturating activity of the substrate, exp(u_f/RT) (K times its half-saturating amount)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ], [
+        bgf:varName "a" ;
+        rdfs:label "Enzyme activity (1, less with an inhibitor)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "E" ;
+        rdfs:label "Enzyme amount (mol)" ;
+        bgf:hasUnits "mol"^^cdt:ucumunit
+    ] ;
+    # v = kcat*a*E*exp(u_f/RT)/(exp(u_f/RT) + Km); the product's potential does not slow it
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <times/>
+                        <ci>kcat</ci>
+                        <ci>a</ci>
+                        <ci>E</ci>
+                        <apply><exp/><apply><divide/><ci>u_f</ci><ci>RT</ci></apply></apply>
+                    </apply>
+                    <apply>
+                        <plus/>
+                        <apply><exp/><apply><divide/><ci>u_f</ci><ci>RT</ci></apply></apply>
+                        <ci>Km</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:KedemKatchalskySoluteFlux
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Kedem-Katchalsky solute flux" ;
+    bgf:hasSymbol "J" ;
+    bgf:lawLabel "KK" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#DDEBF7" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'f' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'r' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "omega" ;
+        rdfs:label "Solute permeability (L/s)" ;
+        bgf:hasUnits "L/s"^^cdt:ucumunit
+    ], [
+        bgf:varName "sigma" ;
+        rdfs:label "Reflection coefficient" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "c_in" ;
+        rdfs:label "Concentration inside (mol/L)" ;
+        bgf:hasUnits "mol/L"^^cdt:ucumunit
+    ], [
+        bgf:varName "c_out" ;
+        rdfs:label "Concentration outside (mol/L)" ;
+        bgf:hasUnits "mol/L"^^cdt:ucumunit
+    ], [
+        bgf:varName "Jv" ;
+        rdfs:label "Water flux (L/s), from a bgf:KedemKatchalskyWaterFlux" ;
+        bgf:hasUnits "L/s"^^cdt:ucumunit
+    ] ;
+    # Js = omega*(c_in - c_out) + (1 - sigma)*(c_in + c_out)/2*Jv
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <times/>
+                        <ci>omega</ci>
+                        <apply><minus/><ci>c_in</ci><ci>c_out</ci></apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <apply><minus/><cn>1</cn><ci>sigma</ci></apply>
+                        <apply><divide/><apply><plus/><ci>c_in</ci><ci>c_out</ci></apply><cn>2</cn></apply>
+                        <ci>Jv</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:ConvectiveSoluteFlux
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Solute carried by a water flow" ;
+    bgf:hasSymbol "J" ;
+    bgf:lawLabel "cv" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#DDEBF7" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'f' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'r' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "c" ;
+        rdfs:label "Concentration of the water carrying it (mol/L)" ;
+        bgf:hasUnits "mol/L"^^cdt:ucumunit
+    ], [
+        bgf:varName "Jv" ;
+        rdfs:label "Water flow (L/s)" ;
+        bgf:hasUnits "L/s"^^cdt:ucumunit
+    ] ;
+    # v = c*Jv
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply><times/><ci>c</ci><ci>Jv</ci></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+#===============================================================================
+
+bgf:MichaelisMentenReactionNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Irreversible Michaelis-Menten reaction with One Node" ;
+    rdfs:subClassOf bgf:MichaelisMentenReaction ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+bgf:KedemKatchalskySoluteFluxNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Kedem-Katchalsky solute flux with One Node" ;
+    rdfs:subClassOf bgf:KedemKatchalskySoluteFlux ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+bgf:ConvectiveSoluteFluxNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Solute carried by a water flow, with One Node" ;
+    rdfs:subClassOf bgf:ConvectiveSoluteFlux ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+#===============================================================================
+#===============================================================================

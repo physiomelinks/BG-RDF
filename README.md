@@ -31,6 +31,16 @@ element's symbol) and says how it is drawn with `bgf:hasStyle`, a `bgf:ElementSt
 | `bgf:SaturatingChemicalConcentration` | QuantityStore | `u = RT ln(K q k_sat/(k_sat + q))` | sat |
 | `bgf:HydraulicResistor` | Resistance | `v = k u` | |
 | `bgf:BernoulliHydraulicResistor` | Resistance | `u = R v + B v abs(v)`, solved for `v` | PB |
+| `bgf:HydraulicCompliance` | QuantityStore | `u = (q - q_us)/C` | C |
+| `bgf:ViscoelasticHydraulicCompliance` | QuantityStore | `u = (q - q_us)/C + R_v v` | VE |
+| `bgf:ElasticVessel` | QuantityStore | `u = E (q - q_hat)/(q_bar - q)^2` (stiffens near `q_bar`) | |
+| `bgf:HydraulicInertance` | FlowStore | `dv/dt = u/I` | |
+| `bgf:ResistiveHydraulicInertance` | FlowStore | `dv/dt = (u - R v)/I` | RI |
+| `bgf:RectifyingHydraulicResistor` | Resistance | `v = k max(u - u_0, 0)` | max |
+| `bgf:KedemKatchalskyWaterFlux` | Reaction | `v = Lp ((u_in - u_out) - sigma (Pi_in - Pi_out))`, `Pi` signals | KK |
+| `bgf:KedemKatchalskySoluteFlux` | Reaction | `v = omega (c_in - c_out) + (1 - sigma)(c_in + c_out)/2 Jv`, `c`, `Jv` signals | KK |
+| `bgf:ConvectiveSoluteFlux` | Reaction | `v = c Jv`, signals | cv |
+| `bgf:MichaelisMentenReaction` | Reaction | `v = kcat a E x/(x + Km)`, `x = exp(u_f/RT)`, enzyme `E` a signal | MM |
 
 A `bgf:TransformNode` whose ports are in different physical domains is taken to be a gyrator. Say
 which it is with `bgf:TransformerNode` or `bgf:GyratorNode`. A reaction that moves charge q across a
@@ -38,6 +48,35 @@ membrane is coupled to the membrane's capacitor through transformers of ratio q 
 membrane potential into a chemical potential (electrogenic transport).
 
 `pytest tests` checks the ontology and templates (`pip install pytest rdflib`).
+
+## Signals:
+
+A `bgf:SignalBond` carries a variable of its source (`bgf:hasSource`: a bond element, a junction or a
+`bgf:SignalBlock`) to its target (`bgf:hasTarget`), where it either sets a signal input of the target's template
+(`bgf:hasSignalInput`; the bond's `bgf:signalInput` names it, else the first not otherwise connected) or scales one
+of its parameters (`bgf:modulates`: in the constitutive relation `p` becomes `p s^n`, `n` the bond's
+`bgf:modulationExponent`, 1 by default). `bgf:signalVariable` picks the source's variable (`q`, `u` or `v`); by
+default a store's quantity, a flow store's, resistance's or reaction's flow, a source's value, a 0-junction's
+potential, a 1-junction's flow and a block's output. A model lists its blocks with `bgf:hasSignalBlock` and its
+signal bonds with `bgf:hasSignalBond`.
+
+Signal blocks (`templates/signal.ttl`) each compute one output `y`, so control laws are chains of them:
+`FirstOrderLag` (`dy/dt = (u - y)/tau`), `SigmoidMap` (`y = (y_min + y_max e^x)/(1 + e^x)`, `x = (u - u_nom)/k`),
+`SaturatingScale` (`y = 1 + alpha u/(u + u_half)`), `LogisticScale` (`y = 1 + a/(1 + exp((u - u_th)/w))`),
+`PowerLaw` (`y = (u/u_ref)^n`), `LinearMap` (`y = a + b u`), `Product`, `Sum`, `OsmoticPressure`
+(`y = phi RT q_s/q_w`), `Concentration` (`y = q_s/q_w`), and `SignalInputPort` and `SignalOutputPort`, a
+model's signals from and to outside it (a module's entrance and exit ports, of type `bgf:portType`). A block's
+variable has fixed units, those of another of its variables (`bgf:unitsOf`), or its source's (an input) or its
+value's (a parameter).
+
+```turtle
+:Ang_scale a bgf:SaturatingScale ; bgf:hasSymbol "ang_scale" ;
+    bgf:parameterValue [ bgf:varName "alpha" ; bgf:hasValue "0.5 1"^^cdt:ucum ] ,
+                       [ bgf:varName "u_half" ; bgf:hasValue "1e-11 mol"^^cdt:ucum ] .
+:s1 a bgf:SignalBond ; bgf:hasSource :q_ATII ; bgf:hasTarget :Ang_scale .
+:s2 a bgf:SignalBond ; bgf:hasSource :Ang_scale ; bgf:hasTarget :R_eff ;
+    bgf:modulates "k" ; bgf:modulationExponent -1 .        # the conductance k divided by the scale
+```
 
 ## Naming variables in generated code:
 
