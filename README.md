@@ -31,8 +31,8 @@ element's symbol) and says how it is drawn with `bgf:hasStyle`, a `bgf:ElementSt
 | `bgf:SaturatingChemicalConcentration` | QuantityStore | `u = RT ln(K q k_sat/(k_sat + q))` | sat |
 | `bgf:HydraulicResistor` | Resistance | `v = k u` | |
 | `bgf:BernoulliHydraulicResistor` | Resistance | `u = R v + B v abs(v)`, solved for `v` | PB |
-| `bgf:HydraulicCompliance` | QuantityStore | `u = (q - q_us)/C` | C |
-| `bgf:ViscoelasticHydraulicCompliance` | QuantityStore | `u = (q - q_us)/C + R_v v` | VE |
+| `bgf:HydraulicCompliance` | QuantityStore | `u = (q - q_us)/C + u_ext` | C |
+| `bgf:ViscoelasticHydraulicCompliance` | QuantityStore | `u = (q - q_us)/C + R_v v + u_ext` | VE |
 | `bgf:ElasticVessel` | QuantityStore | `u = E (q - q_hat)/(q_bar - q)^2` (stiffens near `q_bar`) | |
 | `bgf:HydraulicInertance` | FlowStore | `dv/dt = u/I` | |
 | `bgf:ResistiveHydraulicInertance` | FlowStore | `dv/dt = (u - R v)/I` | RI |
@@ -55,7 +55,8 @@ A `bgf:SignalBond` carries a variable of its source (`bgf:hasSource`: a bond ele
 `bgf:SignalBlock`) to its target (`bgf:hasTarget`), where it either sets a signal input of the target's template
 (`bgf:hasSignalInput`; the bond's `bgf:signalInput` names it, else the first not otherwise connected) or scales one
 of its parameters (`bgf:modulates`: in the constitutive relation `p` becomes `p s^n`, `n` the bond's
-`bgf:modulationExponent`, 1 by default). `bgf:signalVariable` picks the source's variable (`q`, `u` or `v`); by
+`bgf:modulationExponent`, 1 by default). A `bgf:signalInput` naming one of the target's parameters (or a source's
+value, `v` or `u`) sets it from the signal instead of a value. `bgf:signalVariable` picks the source's variable (`q`, `u` or `v`); by
 default a store's quantity, a flow store's, resistance's or reaction's flow, a source's value, a 0-junction's
 potential, a 1-junction's flow and a block's output. A model lists its blocks with `bgf:hasSignalBlock` and its
 signal bonds with `bgf:hasSignalBond`.

@@ -470,7 +470,9 @@ or reaction's flow, a source's value, a 0-junction's potential, a 1-junction's f
 
 bgf:signalInput
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dcterms:description "The signal input of its target (by varName) that a signal bond sets." ;
+    dcterms:description """The signal input of its target (by varName) that a signal bond sets; or one of the target's
+parameters (or a flow or potential source's value, v or u), which the signal then sets in place of a value (e.g. a
+vessel's external pressure from another module).""" ;
     rdfs:domain bgf:SignalBond ;
     rdfs:range xsd:string .
 
@@ -491,9 +493,10 @@ bgf:modulationExponent
 
 bgf:portType
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dcterms:description """The port type a signal input or output port (bgf:SignalInputPort, bgf:SignalOutputPort)
-has when the model is a module of a module library: modules are connected where an exit port and an entrance port
-have the same type. By default <the element's name>_port.""" ;
+    dcterms:description """The port type a signal input or output port (bgf:SignalInputPort, bgf:SignalOutputPort), or a
+flow or potential source, has when the model is a module of a module library: modules are connected where an exit
+port and an entrance port have the same type. A port block's default is <the element's name>_port; a source with a
+port type is a port of its flow and potential (e.g. a vessel_port), an entrance when its bond leaves it.""" ;
     rdfs:range xsd:string .
 
 #################################################################

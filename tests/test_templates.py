@@ -233,9 +233,9 @@ def test_elements_with_signal_inputs_fix_their_units(graph):
 
 
 def test_the_compliances_are_linear_and_the_viscous_wall_adds_its_rate(graph):
-    env = dict(q=1.3, q_us=0.8, C=0.05, R_v=2.0, v=0.4)
-    assert _solve(graph, 'HydraulicCompliance', 'u', env) == pytest.approx((1.3 - 0.8) / 0.05)
-    assert _solve(graph, 'ViscoelasticHydraulicCompliance', 'u', env) == pytest.approx((1.3 - 0.8) / 0.05 + 0.8)
+    env = dict(q=1.3, q_us=0.8, C=0.05, R_v=2.0, v=0.4, u_ext=0.5)
+    assert _solve(graph, 'HydraulicCompliance', 'u', env) == pytest.approx((1.3 - 0.8) / 0.05 + 0.5)
+    assert _solve(graph, 'ViscoelasticHydraulicCompliance', 'u', env) == pytest.approx((1.3 - 0.8) / 0.05 + 0.8 + 0.5)
 
 
 def test_the_one_way_resistance_passes_flow_only_above_the_opposing_pressure(graph):

@@ -446,9 +446,13 @@ bgf:HydraulicCompliance
         bgf:varName "q_us" ;
         rdfs:label "Unstressed volume (L)" ;
         bgf:hasUnits "L"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_ext" ;
+        rdfs:label "External pressure (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
     ] ;
     # ode(q, t) = v
-    # u = (q - q_us)/C
+    # u = (q - q_us)/C + u_ext
     bgf:constitutiveRelation """
         <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -460,9 +464,13 @@ bgf:HydraulicCompliance
                 <eq/>
                 <ci>u</ci>
                 <apply>
-                    <divide/>
-                    <apply><minus/><ci>q</ci><ci>q_us</ci></apply>
-                    <ci>C</ci>
+                    <plus/>
+                    <apply>
+                        <divide/>
+                        <apply><minus/><ci>q</ci><ci>q_us</ci></apply>
+                        <ci>C</ci>
+                    </apply>
+                    <ci>u_ext</ci>
                 </apply>
             </apply>
         </math>
@@ -495,10 +503,14 @@ bgf:ViscoelasticHydraulicCompliance
         bgf:varName "R_v" ;
         rdfs:label "Wall viscous resistance (kPa.s/L)" ;
         bgf:hasUnits "J.s/L2"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_ext" ;
+        rdfs:label "External pressure (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
     ] ;
-    # A Voigt wall: the elastic pressure plus a viscous one in its rate of filling
+    # A Voigt wall: the elastic pressure plus a viscous one in its rate of filling, and the pressure outside
     # ode(q, t) = v
-    # u = (q - q_us)/C + R_v*v
+    # u = (q - q_us)/C + R_v*v + u_ext
     bgf:constitutiveRelation """
         <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -517,6 +529,7 @@ bgf:ViscoelasticHydraulicCompliance
                         <ci>C</ci>
                     </apply>
                     <apply><times/><ci>R_v</ci><ci>v</ci></apply>
+                    <ci>u_ext</ci>
                 </apply>
             </apply>
         </math>
