@@ -196,7 +196,7 @@ def test_signal_vocabulary_is_described(graph):
     '''Signal blocks, signal bonds' properties and template signal inputs and outputs are in the ontology.'''
     for name in ('SignalBlock', 'SignalBond', 'SignalDomain', 'hasSignalBlock', 'hasSignalBond', 'hasSignalInput',
                  'hasSignalOutput', 'unitsOf', 'signalVariable', 'signalInput', 'modulates', 'modulationExponent',
-                 'portType', 'portVariables', 'portDirection', 'portOrder', 'multiPort'):
+                 'portType', 'portVariables', 'portDirection', 'portOrder', 'multiPort', 'unitSystem'):
         assert (BGF[name], RDF.type, None) in graph, name
 
 

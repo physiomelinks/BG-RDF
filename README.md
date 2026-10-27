@@ -74,6 +74,10 @@ a model's signals from and to outside it (a module's entrance and exit ports, of
 variable has fixed units, those of another of its variables or of a product or quotient of two (`bgf:unitsOf`
 `"u"`, `"k*u"`, `"u_1/u_2"`), or its source's (an input) or its value's (a parameter, a constant's output).
 
+A model in other units than the templates' says so with `bgf:unitSystem`: `"SI"` has cubic metres for litres and
+Pa for kPa (`<model> bgf:unitSystem "SI"`). A value given in other units of the same kind (`"6.0e-9 m6/J"`,
+`"0.5 kPa"`) is converted to its variable's.
+
 ### Module ports:
 
 Any element or block with a `bgf:portType` is part of a module port of that type. `bgf:portVariables` names the

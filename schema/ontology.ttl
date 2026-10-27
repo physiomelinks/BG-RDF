@@ -502,6 +502,14 @@ leaves it; any other element or block of the variables bgf:portVariables names (
 bond element's flow, a block's output), an exit port.""" ;
     rdfs:range xsd:string .
 
+bgf:unitSystem
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description """A model's unit system, in place of the templates' units: \"SI\" has cubic metres for their
+litres and Pa for their kPa (so a hydraulic model's volumes are in m3, its flows in m3/s and its pressures in J/m3).
+Values given in other units of the same kind are converted to the model's.""" ;
+    rdfs:domain bgf:BondgraphModel ;
+    rdfs:range xsd:string .
+
 bgf:portVariables
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     dcterms:description """The variables an element with a bgf:portType gives its port, in order, by their names in its
