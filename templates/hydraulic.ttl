@@ -44,6 +44,73 @@ bgf:HydraulicFlow
 
 #===============================================================================
 
+bgf:BernoulliHydraulicResistor
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Resistance ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic resistor with a Bernoulli loss" ;
+    bgf:lawLabel "PB" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#444" ;
+        bgf:backgroundColour "#FCE4D6" ;
+        bgf:borderColour "#C00000" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "R" ;
+        rdfs:label "Viscous (Poiseuille) resistance" ;
+        bgf:hasUnits "kPa.s/L"^^cdt:ucumunit
+    ], [
+        bgf:varName "B" ;
+        rdfs:label "Bernoulli (inertial) loss coefficient" ;
+        bgf:hasUnits "kPa.s2/L2"^^cdt:ucumunit
+    ] ;
+    # u = R*v + B*v*|v|, solved for the flow: v = 2*u/(R + sqrt(R^2 + 4*B*|u|)); with B = 0 it is the Hydraulic
+    # resistance, v = k*u, with k = 1/R
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <times/>
+                        <cn>2</cn>
+                        <ci>u</ci>
+                    </apply>
+                    <apply>
+                        <plus/>
+                        <ci>R</ci>
+                        <apply>
+                            <root/>
+                            <apply>
+                                <plus/>
+                                <apply>
+                                    <power/>
+                                    <ci>R</ci>
+                                    <cn>2</cn>
+                                </apply>
+                                <apply>
+                                    <times/>
+                                    <cn>4</cn>
+                                    <ci>B</ci>
+                                    <apply>
+                                        <abs/>
+                                        <ci>u</ci>
+                                    </apply>
+                                </apply>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
 bgf:HydraulicStorage
     a bgf:ElementTemplate ;
     rdfs:subClassOf bgf:QuantityStore ;
@@ -316,6 +383,12 @@ bgf:HydraulicResistanceNode
     a bgf:CompositeTemplate ;
     rdfs:label "Hydraulic resistance with One Node" ;
     rdfs:subClassOf bgf:HydraulicResistor ;
+    rdfs:subClassOf bgf:OneResistanceNode .
+
+bgf:BernoulliHydraulicResistanceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Hydraulic resistance with a Bernoulli loss and One Node" ;
+    rdfs:subClassOf bgf:BernoulliHydraulicResistor ;
     rdfs:subClassOf bgf:OneResistanceNode .
 
 bgf:HydraulicStorageNode

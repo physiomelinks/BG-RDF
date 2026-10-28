@@ -144,6 +144,18 @@ bgf:TransformNode
     rdfs:label "Transform node" ;
     dcterms:description "Transform potential and flow." .
 
+bgf:TransformerNode
+    a owl:Class ;
+    rdfs:subClassOf bgf:TransformNode ;
+    rdfs:label "Transformer node" ;
+    dcterms:description "A transformer, also between physical domains: the potential on its outward port is its ratio times the potential on its inward port, and the inward flow its ratio times the outward flow (e.g. a membrane potential coupled to a reaction that moves charge, with ratio z F)." .
+
+bgf:GyratorNode
+    a owl:Class ;
+    rdfs:subClassOf bgf:TransformNode ;
+    rdfs:label "Gyrator node" ;
+    dcterms:description "A gyrator, also within a physical domain: the potential on each port is its ratio times the flow on the other (e.g. a voice coil, force = B l current)." .
+
 bgf:ZeroNode
     a owl:Class ;
     rdfs:subClassOf bgf:JunctionStructure ;
@@ -274,6 +286,108 @@ bgf:varName
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     dcterms:description "A name to identify a variable, for both when it is declared and when it is given a value." ;
     rdfs:range xsd:Name .
+
+#################################################################
+#    Names of a model's variables in generated code
+#################################################################
+
+bgf:NamingRule
+    a owl:Class ;
+    dcterms:description """How the variables of a model's elements are named in generated code (e.g. CellML), in place of
+the bond graph's names (q_G6P_c, u_q_G6P_c, v_Re_HK_c). A rule names one variable (bgf:forVariable, the template's
+name for it: q, u, v, u_f, K, kappa, ...) of the elements of one class (bgf:forElementClass, e.g. bgf:QuantityStore;
+all classes when absent) in one physical domain (bgf:forDomain, e.g. bgf:Chemical; all domains when absent) by a
+pattern (bgf:namePattern) with placeholders {species}, {location}, {name} (the
+species, else the element's identifier), {element} (the bond graph's name for the element, e.g. q_G6P_c), {label}
+(its symbol, e.g. q) and {var}. Characters a name can't hold become _, repeated or surrounding _ are dropped, a name
+starting with a digit is prefixed with {var}_, and a name already taken gets _2, _3, ... Of the rules for a variable,
+the one naming the element's class and domain wins, then its class, then its domain, then neither.""" .
+
+bgf:hasNamingRule
+    a owl:ObjectProperty ;
+    dcterms:description "A naming rule for the model's variables." ;
+    rdfs:domain bgf:BondgraphModel ;
+    rdfs:range bgf:NamingRule .
+
+bgf:forElementClass
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    dcterms:description "The class of elements a naming rule applies to: a direct subclass of bgf:BondElement (e.g. bgf:QuantityStore, bgf:Reaction, bgf:PotentialSource)." ;
+    rdfs:range owl:Class .
+
+bgf:forDomain
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    dcterms:description "The physical domain of the elements a naming rule applies to (e.g. bgf:Chemical, bgf:Hydraulic)." ;
+    rdfs:domain bgf:NamingRule ;
+    rdfs:range bgf:PhysicalDomain .
+
+bgf:forVariable
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "The variable a naming rule or variable name is for, by its template name (q, u, v, u_f, K, kappa, ...)." ;
+    rdfs:range xsd:string .
+
+bgf:namePattern
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "A naming rule's pattern, e.g. \"mu_{species}_{location}\"." ;
+    rdfs:domain bgf:NamingRule ;
+    rdfs:range xsd:string .
+
+bgf:VariableName
+    a owl:Class ;
+    dcterms:description "One element variable's name in generated code, given explicitly (it wins over any naming rule)." .
+
+bgf:hasVariableName
+    a owl:ObjectProperty ;
+    rdfs:domain bgf:BondElement ;
+    rdfs:range bgf:VariableName .
+
+bgf:cellmlName
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "The name a variable is given in generated code." ;
+    rdfs:domain bgf:VariableName ;
+    rdfs:range xsd:string .
+
+#################################################################
+#    Presentation of an Element Template
+#################################################################
+
+bgf:ElementStyle
+    a owl:Class ;
+    dcterms:description "How a diagram draws the elements of an Element Template, so that elements with different constitutive relations look different." .
+
+bgf:hasStyle
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain bgf:ElementTemplate ;
+    rdfs:range bgf:ElementStyle .
+
+bgf:lawLabel
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "A short tag naming an Element Template's constitutive relation (e.g. \"sat\" for a saturating reaction), drawn with the element's symbol." ;
+    rdfs:domain bgf:ElementTemplate ;
+    rdfs:range xsd:string .
+
+bgf:textColour
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "A CSS colour for the element's symbol." ;
+    rdfs:domain bgf:ElementStyle ;
+    rdfs:range xsd:string .
+
+bgf:backgroundColour
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "A CSS colour for the element's background." ;
+    rdfs:domain bgf:ElementStyle ;
+    rdfs:range xsd:string .
+
+bgf:borderColour
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "A CSS colour for the element's border." ;
+    rdfs:domain bgf:ElementStyle ;
+    rdfs:range xsd:string .
+
+bgf:borderStyle
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dcterms:description "The element's border: \"solid\" (the default), \"dashed\" or \"double\"." ;
+    rdfs:domain bgf:ElementStyle ;
+    rdfs:range xsd:string .
 
 #################################################################
 #    Object Properties

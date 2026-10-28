@@ -139,6 +139,152 @@ bgf:ChemicalConcentration
 
 #===============================================================================
 
+bgf:SaturatingChemicalReaction
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Saturating chemical reaction" ;
+    bgf:lawLabel "sat" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#FFE9A8" ;
+        bgf:borderColour "#C55A11" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'f' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'r' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "kappa" ;
+        bgf:hasUnits "mol/s"^^cdt:ucumunit
+    ], [
+        bgf:varName "sigma" ;
+        rdfs:label "Saturation (half-saturated where exp(u_f/RT) + exp(u_r/RT) = sigma)" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # v = kappa*(exp(u_f/RT) - exp(u_r/RT))/(1 + (exp(u_f/RT) + exp(u_r/RT))/sigma)
+    # The mass-action reaction slowed as its substrates or products build up; its equilibrium is unchanged, and it
+    # tends to the Chemical reaction as sigma grows.
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <times/>
+                        <ci>kappa</ci>
+                        <apply>
+                            <minus/>
+                            <apply>
+                                <exp/>
+                                <apply><divide/><ci>u_f</ci><ci>RT</ci></apply>
+                            </apply>
+                            <apply>
+                                <exp/>
+                                <apply><divide/><ci>u_r</ci><ci>RT</ci></apply>
+                            </apply>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <plus/>
+                        <cn>1</cn>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <plus/>
+                                <apply>
+                                    <exp/>
+                                    <apply><divide/><ci>u_f</ci><ci>RT</ci></apply>
+                                </apply>
+                                <apply>
+                                    <exp/>
+                                    <apply><divide/><ci>u_r</ci><ci>RT</ci></apply>
+                                </apply>
+                            </apply>
+                            <ci>sigma</ci>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:SaturatingChemicalConcentration
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:QuantityStore ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Chemical concentration with saturating activity" ;
+    bgf:lawLabel "sat" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#00B050" ;
+        bgf:backgroundColour "#D6EAF8" ;
+        bgf:borderColour "#2E75B6" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "K" ;
+        bgf:hasUnits "mol-1"^^cdt:ucumunit
+    ], [
+        bgf:varName "k_sat" ;
+        rdfs:label "Amount at which the activity is half its ideal value" ;
+        bgf:hasUnits "mol"^^cdt:ucumunit
+    ] ;
+    # ode(q, t) = v
+    # u = RT*ln(K*q*k_sat/(k_sat + q))
+    # A store whose activity saturates (a polymer's chain ends, binding sites): ideal while q << k_sat.
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>t</ci>
+                    </bvar>
+                    <ci>q</ci>
+                </apply>
+                <ci>v</ci>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>u</ci>
+                <apply>
+                    <times/>
+                    <ci>RT</ci>
+                    <apply>
+                        <ln/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <ci>K</ci>
+                                <ci>q</ci>
+                                <ci>k_sat</ci>
+                            </apply>
+                            <apply>
+                                <plus/>
+                                <ci>k_sat</ci>
+                                <ci>q</ci>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
 bgf:NKETransporter
     a bgf:ElementTemplate ;
     rdfs:subClassOf bgf:Reaction ;
@@ -369,6 +515,20 @@ bgf:ChemicalReactionNode
     a bgf:CompositeTemplate ;
     rdfs:label "Chemical reaction with One Node" ;
     rdfs:subClassOf bgf:ChemicalReaction ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+#===============================================================================
+
+bgf:SaturatingChemicalStorageNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Chemical storage with saturating activity and Zero Node" ;
+    rdfs:subClassOf bgf:SaturatingChemicalConcentration ;
+    rdfs:subClassOf bgf:ZeroStorageNode .
+
+bgf:SaturatingChemicalReactionNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Saturating chemical reaction with One Node" ;
+    rdfs:subClassOf bgf:SaturatingChemicalReaction ;
     rdfs:subClassOf bgf:OneReactionNode .
 
 #===============================================================================
