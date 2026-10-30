@@ -200,6 +200,22 @@ bgf:Variable
     a owl:Class .
 
 #################################################################
+#    Unit systems
+#################################################################
+
+bgf:UnitSystem
+    a owl:Class ;
+    dcterms:description "The units in which a model is built, for example when generating code. Values keep their own units." .
+
+bgf:SI
+    a owl:NamedIndividual, bgf:UnitSystem ;
+    dcterms:description "mol, L, J and C. The default when a model has no bgf:unitSystem." .
+
+bgf:Cellular
+    a owl:NamedIndividual, bgf:UnitSystem ;
+    dcterms:description "fmol, pL, fJ and fC." .
+
+#################################################################
 #    Port directions
 #################################################################
 
@@ -298,6 +314,11 @@ bgf:hasSignalBond
     a owl:ObjectProperty ;
     rdfs:domain bgf:BondgraphModel ;
     rdfs:range bgf:SignalBond .
+
+bgf:unitSystem
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain bgf:BondgraphModel ;
+    rdfs:range bgf:UnitSystem .
 
 #################################################################
 
