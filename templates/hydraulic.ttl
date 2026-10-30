@@ -417,3 +417,375 @@ bgf:OldOsmosisNode
 
 #===============================================================================
 #===============================================================================
+
+# Templates for vessel and organ modules: a linear and a viscoelastic compliance, an inertance (alone and with a
+# viscous loss), a resistance that only passes flow forwards against an opposing pressure, and the water flux of
+# Kedem-Katchalsky transport (its solute flux is bgf:KedemKatchalskySoluteFlux, in chemical.ttl). Any parameter can
+# be scaled by a signal (a bgf:SignalBond with bgf:modulates), e.g. a resistance by angiotensin II.
+
+#===============================================================================
+
+bgf:HydraulicCompliance
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:QuantityStore ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic compliance" ;
+    bgf:lawLabel "C" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#00B050" ;
+        bgf:backgroundColour "#E2F0D9" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "C" ;
+        rdfs:label "Compliance (L/kPa)" ;
+        bgf:hasUnits "L2/J"^^cdt:ucumunit
+    ], [
+        bgf:varName "q_us" ;
+        rdfs:label "Unstressed volume (L)" ;
+        bgf:hasUnits "L"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_ext" ;
+        rdfs:label "External pressure (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ] ;
+    # ode(q, t) = v
+    # u = (q - q_us)/C + u_ext
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply><diff/><bvar><ci>t</ci></bvar><ci>q</ci></apply>
+                <ci>v</ci>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>u</ci>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <divide/>
+                        <apply><minus/><ci>q</ci><ci>q_us</ci></apply>
+                        <ci>C</ci>
+                    </apply>
+                    <ci>u_ext</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:ViscoelasticHydraulicCompliance
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:QuantityStore ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic compliance with a viscous wall" ;
+    bgf:lawLabel "VE" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#00B050" ;
+        bgf:backgroundColour "#E2F0D9" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "C" ;
+        rdfs:label "Compliance (L/kPa)" ;
+        bgf:hasUnits "L2/J"^^cdt:ucumunit
+    ], [
+        bgf:varName "q_us" ;
+        rdfs:label "Unstressed volume (L)" ;
+        bgf:hasUnits "L"^^cdt:ucumunit
+    ], [
+        bgf:varName "R_v" ;
+        rdfs:label "Wall viscous resistance (kPa.s/L)" ;
+        bgf:hasUnits "J.s/L2"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_ext" ;
+        rdfs:label "External pressure (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ] ;
+    # A Voigt wall: the elastic pressure plus a viscous one in its rate of filling, and the pressure outside
+    # ode(q, t) = v
+    # u = (q - q_us)/C + R_v*v + u_ext
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply><diff/><bvar><ci>t</ci></bvar><ci>q</ci></apply>
+                <ci>v</ci>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>u</ci>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <divide/>
+                        <apply><minus/><ci>q</ci><ci>q_us</ci></apply>
+                        <ci>C</ci>
+                    </apply>
+                    <apply><times/><ci>R_v</ci><ci>v</ci></apply>
+                    <ci>u_ext</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:HydraulicInertance
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:FlowStore ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic inertance" ;
+    bgf:hasSymbol "I" ;
+    bgf:hasParameter [
+        bgf:varName "I" ;
+        rdfs:label "Inertance (kPa.s2/L)" ;
+        bgf:hasUnits "J.s2/L2"^^cdt:ucumunit
+    ] ;
+    # ode(v, t) = u/I
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply><diff/><bvar><ci>t</ci></bvar><ci>v</ci></apply>
+                <apply><divide/><ci>u</ci><ci>I</ci></apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:ResistiveHydraulicInertance
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:FlowStore ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic inertance with a viscous loss" ;
+    bgf:hasSymbol "I" ;
+    bgf:lawLabel "RI" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "black" ;
+        bgf:backgroundColour "lightgrey" ;
+        bgf:borderColour "#C00000" ;
+        bgf:borderStyle "solid"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "I" ;
+        rdfs:label "Inertance (kPa.s2/L)" ;
+        bgf:hasUnits "J.s2/L2"^^cdt:ucumunit
+    ], [
+        bgf:varName "R" ;
+        rdfs:label "Viscous resistance (kPa.s/L)" ;
+        bgf:hasUnits "J.s/L2"^^cdt:ucumunit
+    ] ;
+    # A vessel segment's resistance and inertance in series, on one flow:
+    # ode(v, t) = (u - R*v)/I
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply><diff/><bvar><ci>t</ci></bvar><ci>v</ci></apply>
+                <apply>
+                    <divide/>
+                    <apply><minus/><ci>u</ci><apply><times/><ci>R</ci><ci>v</ci></apply></apply>
+                    <ci>I</ci>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:RectifyingHydraulicResistor
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Resistance ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Hydraulic resistance passing flow one way, against an opposing pressure" ;
+    bgf:lawLabel "max" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#444" ;
+        bgf:backgroundColour "#FCE4D6" ;
+        bgf:borderColour "#C00000" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "k" ;
+        rdfs:label "Conductance (L/s/kPa)" ;
+        bgf:hasUnits "L2.s-1.J-1"^^cdt:ucumunit
+    ], [
+        bgf:varName "u_0" ;
+        rdfs:label "Opposing pressure, e.g. oncotic (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ] ;
+    # e.g. glomerular filtration: v = k*max(u - u_0, 0)
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <times/>
+                    <ci>k</ci>
+                    <apply>
+                        <max/>
+                        <apply><minus/><ci>u</ci><ci>u_0</ci></apply>
+                        <cn>0</cn>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:KedemKatchalskyWaterFlux
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Kedem-Katchalsky water flux" ;
+    bgf:hasSymbol "J" ;
+    bgf:lawLabel "KK" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#DDEBF7" ;
+        bgf:borderColour "#2F5597" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'water_in' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'water_out' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "Lp" ;
+        rdfs:label "Hydraulic conductance (L/s/kPa)" ;
+        bgf:hasUnits "L2.s-1.J-1"^^cdt:ucumunit
+    ], [
+        bgf:varName "sigma" ;
+        rdfs:label "Reflection coefficient" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "Pi_in" ;
+        rdfs:label "Osmotic pressure inside (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ], [
+        bgf:varName "Pi_out" ;
+        rdfs:label "Osmotic pressure outside (kPa)" ;
+        bgf:hasUnits "J/L"^^cdt:ucumunit
+    ] ;
+    # Jv = Lp*((u_in - u_out) - sigma*(Pi_in - Pi_out)); its flow is the Jv signal of the solute flux
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <times/>
+                    <ci>Lp</ci>
+                    <apply>
+                        <minus/>
+                        <apply><minus/><ci>u_water_in</ci><ci>u_water_out</ci></apply>
+                        <apply>
+                            <times/>
+                            <ci>sigma</ci>
+                            <apply><minus/><ci>Pi_in</ci><ci>Pi_out</ci></apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+#===============================================================================
+
+bgf:SignalWaterFlux
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Hydraulic ;
+    rdfs:label "Water flow set by a signal" ;
+    bgf:hasSymbol "J" ;
+    bgf:lawLabel "set" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#2F5597" ;
+        bgf:backgroundColour "#F2F2F2" ;
+        bgf:borderColour "#7F7F7F" ;
+        bgf:borderStyle "dashed"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'water_in' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'water_out' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasSignalInput [
+        bgf:varName "J" ;
+        rdfs:label "The flux (L/s), e.g. from a law built of signal blocks" ;
+        bgf:hasUnits "L/s"^^cdt:ucumunit
+    ] ;
+    # v = J: a flow from one side to the other that a signal sets (a modulated flow source between two nodes)
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply><eq/><ci>v</ci><ci>J</ci></apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
+bgf:HydraulicComplianceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Hydraulic compliance with Zero Node" ;
+    rdfs:subClassOf bgf:HydraulicCompliance ;
+    rdfs:subClassOf bgf:ZeroStorageNode .
+
+bgf:ViscoelasticHydraulicComplianceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Hydraulic compliance with a viscous wall and Zero Node" ;
+    rdfs:subClassOf bgf:ViscoelasticHydraulicCompliance ;
+    rdfs:subClassOf bgf:ZeroStorageNode .
+
+bgf:HydraulicInertanceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Hydraulic inertance with One Node" ;
+    rdfs:subClassOf bgf:HydraulicInertance ;
+    rdfs:subClassOf bgf:OneStorageNode .
+
+bgf:ResistiveHydraulicInertanceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Hydraulic inertance with a viscous loss and One Node" ;
+    rdfs:subClassOf bgf:ResistiveHydraulicInertance ;
+    rdfs:subClassOf bgf:OneStorageNode .
+
+bgf:RectifyingHydraulicResistanceNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "One-way hydraulic resistance with One Node" ;
+    rdfs:subClassOf bgf:RectifyingHydraulicResistor ;
+    rdfs:subClassOf bgf:OneResistanceNode .
+
+bgf:KedemKatchalskyWaterFluxNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Kedem-Katchalsky water flux with One Node" ;
+    rdfs:subClassOf bgf:KedemKatchalskyWaterFlux ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+#===============================================================================
+#===============================================================================
+
+bgf:SignalWaterFluxNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Water flow set by a signal with One Node" ;
+    rdfs:subClassOf bgf:SignalWaterFlux ;
+    rdfs:subClassOf bgf:OneReactionNode .
