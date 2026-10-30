@@ -144,6 +144,18 @@ bgf:TransformNode
     rdfs:label "Transform node" ;
     dcterms:description "Transform potential and flow." .
 
+bgf:TransformerNode
+    a owl:Class ;
+    rdfs:subClassOf bgf:TransformNode ;
+    rdfs:label "Transformer node" ;
+    dcterms:description "A transformer, also between physical domains: the potential on its outward port is its ratio times the potential on its inward port, and the inward flow its ratio times the outward flow (e.g. a membrane potential coupled to a reaction that moves charge, with ratio z F)." .
+
+bgf:GyratorNode
+    a owl:Class ;
+    rdfs:subClassOf bgf:TransformNode ;
+    rdfs:label "Gyrator node" ;
+    dcterms:description "A gyrator, also within a physical domain: the potential on each port is its ratio times the flow on the other (e.g. a voice coil, force = B l current)." .
+
 bgf:ZeroNode
     a owl:Class ;
     rdfs:subClassOf bgf:JunctionStructure ;
