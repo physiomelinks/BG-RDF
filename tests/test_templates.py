@@ -74,6 +74,23 @@ def test_variable_naming_is_described(graph):
         assert placeholder in str(graph.value(BGF.NamingRule, URIRef('http://purl.org/dc/terms/description')))
 
 
+def test_a_model_can_give_a_domain_constant_its_own_value(graph):
+    '''A model at another temperature gives the chemical domain's RT its own value (bgf:constantValue), naming the
+    domain (bgf:forDomain) when more than one has the constant; forDomain is not only a naming rule's.'''
+    assert (BGF.constantValue, RDF.type, URIRef('http://www.w3.org/2002/07/owl#ObjectProperty')) in graph
+    assert graph.value(BGF.constantValue, RDFS.domain) == BGF.BondgraphModel
+    assert graph.value(BGF.constantValue, RDFS.range) == BGF.Value
+    description = str(graph.value(BGF.constantValue, URIRef('http://purl.org/dc/terms/description')))
+    for term in ('bgf:varName', 'bgf:hasValue', 'bgf:forDomain'):
+        assert term in description
+    assert graph.value(BGF.forDomain, RDFS.domain) is None
+    assert graph.value(BGF.forDomain, RDFS.range) == BGF.PhysicalDomain
+    # the constant the README's example sets is one the chemical domain has
+    assert 'RT' in _names(graph, BGF.Chemical, BGF.hasConstant)
+    with open(os.path.join(ROOT, 'README.md')) as f:
+        assert 'bgf:constantValue [ bgf:varName "RT"' in f.read()
+
+
 def test_each_template_is_defined_once(graph):
     '''A template has at most one label, constitutive relation, law label and style (the ontology's functional
     properties): a second definition of the same name in the templates would give it two.'''

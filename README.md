@@ -51,6 +51,20 @@ another way: a `bgf:NamingRule` names one variable of one class of element by a 
 :Re_HK bgf:hasVariableName [ bgf:forVariable "v" ; bgf:cellmlName "v_hexokinase" ] .
 ```
 
+## A model's own value of a domain constant:
+
+A physical domain's constants come from its template: the chemical domain's `RT` is 2578.73058 J/mol (310 K). A
+model at another temperature gives its own value, which a converter uses in place of the template's:
+
+```turtle
+:model a bgf:BondgraphModel ;
+    bgf:constantValue [ bgf:varName "RT" ; bgf:hasValue "2560.712 J/mol"^^cdt:ucum ] .
+```
+
+`bgf:forDomain bgf:Chemical` on the value names the domain, for a constant more than one domain has. Without it a
+model that needs another `RT` has to rescale something else: with a membrane potential acting on a reaction through
+a transformer, rescaling the transformer's ratio gives the right rate and the wrong current.
+
 ## Tools:
 
 * **[bg2cellml](https://github.com/CellDL/BG-Tools)**: a Python utility to generate CellML from BG-RDF models.
