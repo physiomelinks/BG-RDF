@@ -316,8 +316,7 @@ bgf:forElementClass
 
 bgf:forDomain
     a owl:ObjectProperty, owl:FunctionalProperty ;
-    dcterms:description "The physical domain of the elements a naming rule applies to (e.g. bgf:Chemical, bgf:Hydraulic)." ;
-    rdfs:domain bgf:NamingRule ;
+    dcterms:description "The physical domain (e.g. bgf:Chemical, bgf:Hydraulic) of the elements a naming rule applies to, or of the constant a model's bgf:constantValue is for." ;
     rdfs:range bgf:PhysicalDomain .
 
 bgf:forVariable
@@ -452,6 +451,16 @@ bgf:variableValue
     a owl:ObjectProperty, owl:FunctionalProperty ;
     dcterms:description "A value to assign to a non-parameter variable in the constitutive relation of a bond element." ;
     rdfs:domain bgf:BondElement ;
+    rdfs:range bgf:Value .
+
+bgf:constantValue
+    a owl:ObjectProperty ;
+    dcterms:description """A value a bond-graph model assigns to a constant of a physical domain, in place of the value the
+domain's template gives it: e.g. the chemical domain's RT at the model's temperature. The value names the constant
+(bgf:varName) and gives its value (bgf:hasValue, a number with units the constant's can be converted from), and names
+the domain (bgf:forDomain) when more than one domain of the model has a constant of that name. A model gives a
+constant of a domain at most one value.""" ;
+    rdfs:domain bgf:BondgraphModel ;
     rdfs:range bgf:Value .
 
 #################################################################
