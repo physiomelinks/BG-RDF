@@ -166,6 +166,15 @@ def test_the_saturating_reaction_is_mass_action_slowed(graph):
     assert _solve(graph, 'SaturatingChemicalReaction', 'v', dict(env, sigma=1e12)) == pytest.approx(mass_action)
 
 
+def test_the_gain_reaction_is_mass_action_scaled(graph):
+    env = dict(kappa=2.0, gain=0.37, u_f=1500.0, u_r=-800.0, RT=2578.73058)
+    mass_action = _solve(graph, 'ChemicalReaction', 'v', env)
+    assert _solve(graph, 'GainChemicalReaction', 'v', env) == pytest.approx(0.37 * mass_action)
+    assert _solve(graph, 'GainChemicalReaction', 'v', dict(env, gain=1.0)) == pytest.approx(mass_action)
+    # same equilibrium: no flux where u_f = u_r, whatever the gain
+    assert _solve(graph, 'GainChemicalReaction', 'v', dict(env, u_r=env['u_f'])) == 0.0
+
+
 def test_the_saturating_store_is_ideal_while_dilute(graph):
     env = dict(K=3.0, q=1e-6, k_sat=1.0, RT=2578.73058)
     assert _solve(graph, 'SaturatingChemicalConcentration', 'u', env) == \

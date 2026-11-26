@@ -94,6 +94,64 @@ bgf:ChemicalReaction
 
 #===============================================================================
 
+bgf:GainChemicalReaction
+    a bgf:ElementTemplate ;
+    rdfs:subClassOf bgf:Reaction ;
+    bgf:hasDomain bgf:Chemical ;
+    rdfs:label "Chemical reaction with a gain" ;
+    bgf:lawLabel "gain" ;
+    bgf:hasStyle [
+        a bgf:ElementStyle ;
+        bgf:textColour "#72329F" ;
+        bgf:backgroundColour "#E2F0D9" ;
+        bgf:borderColour "#548235" ;
+        bgf:borderStyle "double"
+    ] ;
+    bgf:hasPort [
+        bgf:portId 'f' ;
+        bgf:direction bgf:InwardPort
+    ], [
+        bgf:portId 'r' ;
+        bgf:direction bgf:OutwardPort
+    ] ;
+    bgf:hasParameter [
+        bgf:varName "kappa" ;
+        bgf:hasUnits "mol/s"^^cdt:ucumunit
+    ], [
+        bgf:varName "gain" ;
+        rdfs:label "Dimensionless factor on the rate (an expression level, a fitted scale); 1 is the Chemical reaction" ;
+        bgf:hasUnits "1"^^cdt:ucumunit
+    ] ;
+    # v = gain*kappa*(exp(u_f/RT) - exp(u_r/RT))
+    # The mass-action reaction with its rate scaled; its equilibrium is unchanged. The gain is kept apart from kappa
+    # so that a factor fitted or set separately (e.g. the number of transporters) stays visible in the model.
+    bgf:constitutiveRelation """
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>v</ci>
+                <apply>
+                    <times/>
+                    <ci>gain</ci>
+                    <ci>kappa</ci>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <exp/>
+                            <apply><divide/><ci>u_f</ci><ci>RT</ci></apply>
+                        </apply>
+                        <apply>
+                            <exp/>
+                            <apply><divide/><ci>u_r</ci><ci>RT</ci></apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    """^^bgf:mathml .
+
+#===============================================================================
+
 bgf:ChemicalConcentration
     a bgf:ElementTemplate ;
     rdfs:subClassOf bgf:QuantityStore ;
@@ -529,6 +587,12 @@ bgf:SaturatingChemicalReactionNode
     a bgf:CompositeTemplate ;
     rdfs:label "Saturating chemical reaction with One Node" ;
     rdfs:subClassOf bgf:SaturatingChemicalReaction ;
+    rdfs:subClassOf bgf:OneReactionNode .
+
+bgf:GainChemicalReactionNode
+    a bgf:CompositeTemplate ;
+    rdfs:label "Chemical reaction with a gain and One Node" ;
+    rdfs:subClassOf bgf:GainChemicalReaction ;
     rdfs:subClassOf bgf:OneReactionNode .
 
 #===============================================================================

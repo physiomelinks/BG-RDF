@@ -27,6 +27,7 @@ element's symbol) and says how it is drawn with `bgf:hasStyle`, a `bgf:ElementSt
 |---|---|---|---|
 | `bgf:ChemicalReaction` | Reaction | `v = kappa (exp(u_f/RT) - exp(u_r/RT))` | |
 | `bgf:SaturatingChemicalReaction` | Reaction | the same over `1 + (exp(u_f/RT) + exp(u_r/RT))/sigma` | sat |
+| `bgf:GainChemicalReaction` | Reaction | `v = gain kappa (exp(u_f/RT) - exp(u_r/RT))`, `gain` dimensionless | gain |
 | `bgf:ChemicalConcentration` | QuantityStore | `u = RT ln(K q)` | |
 | `bgf:SaturatingChemicalConcentration` | QuantityStore | `u = RT ln(K q k_sat/(k_sat + q))` | sat |
 | `bgf:HydraulicResistor` | Resistance | `v = k u` | |
